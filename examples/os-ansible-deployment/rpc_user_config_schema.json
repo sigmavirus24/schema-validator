@@ -1,0 +1,40 @@
+{
+    "type": "object",
+    "properties": {
+        "cidr_networks": {
+            "type": "object",
+            "properties": {
+                "container": {
+                    "type": "string",
+                    "format": "cidr",
+                    "required": True
+                },
+                "snet": {
+                    "type": "string",
+                    "format": "cidr",
+                    "required": True
+                },
+                "tunnel": {
+                    "type": "string",
+                    "format": "cidr",
+                    "required": True
+                },
+                "storage": {
+                    "type": "string",
+                    "format": "cidr",
+                    "required": True
+                }
+            }
+        },
+        "used_ips": {
+            "type": "array",
+            "items": {"type": "string"}
+        },
+        "global_overrides": {
+            "type": "object",
+        }
+    },
+    "required": [
+        "cidr_networks"
+    ]
+}
