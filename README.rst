@@ -7,11 +7,20 @@ confusing and have trouble writing the YAML they need to. Provided there's a
 schema for the file in question, this tool will analyze your YAML file and 
 alert you to any schema violations.
 
+Install
+-------
+
+.. code-block:: bash
+
+    $ pip install -e git+git://github.com/sigmavirus24/schema-validator
+
 Usage
 -----
 
 .. code-block:: bash
 
+    $ schema-validator examples/os-ansible-deployment/user_variables{_schema.json,.yml}
+    # or
     $ python -m schema_validator examples/os-ansible-deployment/user_variables{_schema.json,.yml}
     $ echo $?
     0
