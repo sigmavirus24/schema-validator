@@ -11,17 +11,8 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-__author__ = 'Ian Cordasco'
-__author_email__ = 'graffatcolmingov@gmail.com'
-__classifiers__ = [
-    'Development Status :: 4 - Beta',
-    'Intended Audience :: Developers',
-    'Programming Language :: Python :: 2.7',
-    'Programming Language :: Python :: 3.4',
-]
-__copyright__ = '(c) 2015 Ian Cordasco'
-__description__ = 'A tool that applies JSON schemas to YAML files'
-__name__ = 'schema-validator'
-__license__ = 'Apache 2.0'
-__version__ = '0.1.0.dev1'
-__url__ = 'https://github.com/sigmavirus24/schema-validator'
+"""Module so users can run ``python -m schema_validator``."""
+from . import main
+
+if __name__ == '__main__':
+    main.main()
