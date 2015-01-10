@@ -36,5 +36,9 @@ def validate(**kwargs):
     with open(schema_file) as fd:
         parsed_schema = json.load(fd)
 
-    # jsonschema.validate(parsed_schema, parsed_yaml)
-    return (parsed_yaml, parsed_schema)
+    try:
+        jsonschema.validate(parsed_yaml, parsed_schema)
+    except jsonschema.exceptions.SchemaError as error:
+        return str(error)
+
+    return 0
