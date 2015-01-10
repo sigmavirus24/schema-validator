@@ -112,7 +112,7 @@
         "swift_container_mysql_password": {"type": "string"},
         "swift_hash_path_suffix": {"type": "string"},
         "swift_hash_path_prefix": {"type": "string"},
-        "swift_allow_all_users": {"type": "string"},
+        "swift_allow_all_users": {"type": "boolean"},
         "swift_dispersion_user": {"type": "string"},
         "swift_dispersion_password": {"type": "string"},
         "haproxy_timeout": {"type": "string"}
@@ -148,7 +148,6 @@
         "swift_hash_path_prefix",
         "cinder_service_password",
         "swift_hash_path_suffix",
-        "nova_console_endpoint",
         "nova_service_password",
         "glance_swift_store_endpoint_type",
         "maas_monitoring_zones",

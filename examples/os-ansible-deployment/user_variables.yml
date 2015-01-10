@@ -23,43 +23,43 @@ rackspace_cloud_api_key: SomeAPIKey
 
 
 ## Rabbit Options
-rabbitmq_password:
-rabbitmq_cookie_token:
+rabbitmq_password: RabbitMQPassword
+rabbitmq_cookie_token: RabbitMQCookieToken
 
 
 ## Tokens
-memcached_encryption_key:
+memcached_encryption_key: MemcachedEncryptionKey
 
 
 ## Container default user
-container_openstack_password:
+container_openstack_password: ContainerOpenstackPassword
 
 
 ## Galera Options
-mysql_root_password:
+mysql_root_password: MySQLRootPassword
 
 # Defined in group_vars/galera, but can overriden here.
 # galera_wait_timeout: 3600
 
 
 ## Keystone Options
-keystone_container_mysql_password:
-keystone_auth_admin_token:
-keystone_auth_admin_password:
-keystone_service_password:
+keystone_container_mysql_password: Keystone
+keystone_auth_admin_token: Keystone
+keystone_auth_admin_password: Keystone
+keystone_service_password: Keystone
 
 
 ## Cinder Options
-cinder_container_mysql_password:
-cinder_service_password:
-cinder_v2_service_password:
+cinder_container_mysql_password: Cinder
+cinder_service_password: Cinder
+cinder_v2_service_password: Cinder
 
 
 ## Glance Options
 # Set default_store to "swift" if using Cloud Files or swift backend
 glance_default_store: file
-glance_container_mysql_password:
-glance_service_password:
+glance_container_mysql_password: Password
+glance_service_password: Password
 glance_swift_store_auth_address: "{{ rackspace_cloud_auth_url }}"
 glance_swift_store_user: "{{ rackspace_cloud_tenant_id }}:{{ rackspace_cloud_username }}"
 glance_swift_store_key: "{{ rackspace_cloud_password }}"
@@ -73,18 +73,18 @@ glance_notification_driver: noop
 #glance_image_cache_max_size: 4294967296
 
 ## Heat Options
-heat_stack_domain_admin_password:
-heat_container_mysql_password:
+heat_stack_domain_admin_password: Password
+heat_container_mysql_password: Password
 ### THE HEAT AUTH KEY NEEDS TO BE 32 CHARACTERS LONG ##
-heat_auth_encryption_key:
+heat_auth_encryption_key: abcdefghijklmnopqrstuvwxyzabcdef
 ### THE HEAT AUTH KEY NEEDS TO BE 32 CHARACTERS LONG ##
-heat_service_password:
-heat_cfn_service_password:
+heat_service_password: Password
+heat_cfn_service_password: Password
 
 
 ## Horizon Options
-horizon_container_mysql_password:
-horizon_secret_key:
+horizon_container_mysql_password: Password
+horizon_secret_key: SecretKey
 
 ## MaaS Options
 # Set maas_auth_method to 'token' to use maas_auth_token/maas_api_url
@@ -104,7 +104,7 @@ maas_scheme: https
 # Override scheme for specific service remote monitor by specifying here: E.g.
 # maas_nova_scheme: http
 maas_keystone_user: maas
-maas_keystone_password:
+maas_keystone_password: Password
 # Check this number of times before registering state change
 maas_alarm_local_consecutive_count: 3
 maas_alarm_remote_consecutive_count: 1
@@ -126,8 +126,8 @@ maas_monitoring_zones:
 #maas_excluded_devices: ['xvde']
 
 ## Neutron Options
-neutron_container_mysql_password:
-neutron_service_password:
+neutron_container_mysql_password: Password
+neutron_service_password: Password
 
 
 ## Nova Options
@@ -136,12 +136,12 @@ neutron_service_password:
 # nova_virt_type: kvm
 # nova_cpu_allocation_ratio: 2.0
 # nova_ram_allocation_ratio: 1.0
-nova_container_mysql_password:
-nova_metadata_proxy_secret:
-nova_ec2_service_password:
-nova_service_password:
-nova_v3_service_password:
-nova_s3_service_password:
+nova_container_mysql_password: Password
+nova_metadata_proxy_secret: Password
+nova_ec2_service_password: Password
+nova_service_password: Password
+nova_v3_service_password: Password
+nova_s3_service_password: Password
 
 # Uncomment "nova_console_endpoint" to define a specific nova console URI or 
 # IP address this will construct the specific proxy endpoint for the console.
@@ -149,23 +149,23 @@ nova_s3_service_password:
 
 
 ## RPC Support
-rpc_support_holland_password:
+rpc_support_holland_password: Password
 # rpc_support_holland_branch: defaults to release tag: v1.0.10
 
 ## Kibana Options
-kibana_password:
+kibana_password: Password
 
 # Swift Options:
-swift_service_password:
-swift_container_mysql_password:
+swift_service_password: Password
+swift_container_mysql_password: Password
 # Once the swift cluster has been setup DO NOT change these hash values!
-swift_hash_path_suffix:
-swift_hash_path_prefix:
+swift_hash_path_suffix: PathSuffix
+swift_hash_path_prefix: PathPrefix
 # This will allow all users to create containers and upload to swift if set to True
 swift_allow_all_users: False
 # The dispersion user is for swift-dispersion-report
 swift_dispersion_user: dispersion
-swift_dispersion_password:
+swift_dispersion_password: Password
 
 # This variables is used to set haproxy's timeout client and timeout server
 # values, they are set in the main config file and are only used by services
