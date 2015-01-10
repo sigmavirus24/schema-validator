@@ -95,8 +95,8 @@
             "type": "string",
             "enum": ["kvm", "qemu", "lxc"]
         },
-        "nova_cpu_allocation_ratio": {"type": "float"},
-        "nova_ram_allocation_ratio": {"type": "float"},
+        "nova_cpu_allocation_ratio": {"type": "number"},
+        "nova_ram_allocation_ratio": {"type": "number"},
         "nova_container_mysql_password": {"type": "string"},
         "nova_metadata_proxy_secret": {"type": "string"},
         "nova_ec2_service_password": {"type": "string"},
