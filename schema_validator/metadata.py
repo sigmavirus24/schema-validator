@@ -11,13 +11,8 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-"""Custom URI validator for jsonschema."""
-import jsonschema
-import rfc3986
-
-
-def register_uri_format_checker():
-    @jsonschema.FormatChecker.cls_checks('uri')
-    def validate_uri(instance):
-        return rfc3986.is_valid_uri(instance, require_scheme=True,
-                                    require_authority=True)
+__author__ = 'Ian Cordasco'
+__author_email__ = 'graffatcolmingov@gmail.com'
+__license__ = 'Apache 2.0'
+__copyright__ = '(c) 2015 Ian Cordasco'
+__version__ = '0.1.0.dev1'

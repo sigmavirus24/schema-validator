@@ -13,14 +13,33 @@
 # under the License.
 import argparse
 
-from . import uri_validator
+from . import metadata
+from . import validation
 
-uri_validator.register_uri_format_checker()
 
-
-def make_argument_parser():
-    pass
+def _make_argument_parser():
+    parser = argparse.ArgumentParser(prog='yaml-schema-validator')
+    parser.add_argument(
+        '-V', '--version', action='version',
+        version='%(prog)s version {0}'.format(metadata.__version__),
+    )
+    parser.add_argument(
+        'schema',
+        help='Path to the JSON schema file used for validation',
+    )
+    parser.add_argument(
+        'yaml',
+        help='Path to the YAML file to validate',
+    )
+    return parser
 
 
 def main():
-    pass
+    """Entry-point and controlling function for schema-validator."""
+    parser = _make_argument_parser()
+    args = parser.parse_args()
+    parser.exit(validation.validate(schema=args.schema, yaml=args.yaml))
+
+
+if __name__ == '__main__':
+    main()
