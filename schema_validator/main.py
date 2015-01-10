@@ -18,10 +18,14 @@ from . import validation
 
 
 def _make_argument_parser():
-    parser = argparse.ArgumentParser(prog='yaml-schema-validator')
+    parser = argparse.ArgumentParser(prog='schema-validator')
     parser.add_argument(
         '-V', '--version', action='version',
         version='%(prog)s version {0}'.format(metadata.__version__),
+    )
+    parser.add_argument(
+        '-q', '--quiet', action='store_true',
+        help='Silence any output from the validator'
     )
     parser.add_argument(
         'schema',
@@ -38,7 +42,10 @@ def main():
     """Entry-point and controlling function for schema-validator."""
     parser = _make_argument_parser()
     args = parser.parse_args()
-    parser.exit(validation.validate(schema=args.schema, yaml=args.yaml))
+    result = validation.validate(schema=args.schema, yaml=args.yaml)
+    if result and args.quiet:
+        result = 1
+    parser.exit(result)
 
 
 if __name__ == '__main__':
