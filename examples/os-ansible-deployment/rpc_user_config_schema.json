@@ -149,7 +149,7 @@
                                             "gateway": {
                                                 "type": "string",
                                                 "format": "hostname"
-                                            }
+                                            },
                                             "dns_nameservers": {
                                                 "type": "array",
                                                 "items": {
