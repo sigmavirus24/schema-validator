@@ -6,25 +6,22 @@
             "properties": {
                 "container": {
                     "type": "string",
-                    "format": "cidr",
-                    "required": true
+                    "format": "cidr"
                 },
                 "snet": {
                     "type": "string",
-                    "format": "cidr",
-                    "required": true
+                    "format": "cidr"
                 },
                 "tunnel": {
                     "type": "string",
-                    "format": "cidr",
-                    "required": true
+                    "format": "cidr"
                 },
                 "storage": {
                     "type": "string",
-                    "format": "cidr",
-                    "required": true
+                    "format": "cidr"
                 }
-            }
+            },
+            "required": ["container", "snet", "tunnel", "storage"]
         },
         "used_ips": {
             "type": "array",
@@ -33,14 +30,8 @@
         "global_overrides": {
             "type": "object",
             "properties": {
-                "internal_lb_vip_address": {
-                    "type": "string",
-                    "format": "hostname"
-                },
-                "external_lb_vip_address": {
-                    "type": "string",
-                    "format": "hostname"
-                },
+                "internal_lb_vip_address": {"type": "string"},
+                "external_lb_vip_address": {"type": "string"},
                 "lb_name": {"type": "string"},
                 "tunnel_bridge": {"type": "string"},
                 "management_bridge": {"type": "string"},
@@ -54,30 +45,30 @@
                                 "properties": {
                                     "group_binds": {
                                         "type": "array",
-                                        "items": {"type": "string"},
-                                        "required": true
+                                        "items": {"type": "string"}
                                     },
                                     "type": {
                                         "type": "string",
-                                        "enum": ["raw", "vxlan", "vlan", "flat"],
-                                        "required": true
+                                        "enum": ["raw", "vxlan", "vlan", "flat"]
                                     },
                                     "container_bridge": {
                                         "type": "string",
-                                        "enum": ["br-mgmt", "br-storage", "br-snet", "br-vlan", "br-vxlan"],
-                                        "required": true
+                                        "enum": ["br-mgmt", "br-storage", "br-snet", "br-vlan", "br-vxlan"]
                                     },
-                                    "container_interface": {
-                                        "type": "string",
-                                        "required": true
-                                    },
+                                    "container_interface": {"type": "string"},
                                     "ip_from_q": {
                                         "type": "string",
                                         "enum": ["container", "storage", "snet", "tunnel"]
                                     },
                                     "net_name": {"type": "string"},
                                     "range": {"type": "string"}
-                                }
+                                },
+                                "required": [
+                                    "group_binds",
+                                    "type",
+                                    "container_bridge",
+                                    "container_interface"
+                                ]
                             }
                         }
                     }
@@ -91,12 +82,9 @@
                 "^infra[1-9][0-9]+$": {
                     "type": "object",
                     "properties": {
-                        "ip": {
-                            "type": "string",
-                            "format": "hostname",
-                            "required": true
-                        }
-                    }
+                        "ip": {"type": "string"}
+                    },
+                    "required": ["ip"]
                 }
             }
         },
@@ -106,11 +94,7 @@
                 "^compute[1-9][0-9]+$": {
                     "type": "object",
                     "properties": {
-                        "ip": {
-                            "type": "string",
-                            "format": "hostname",
-                            "required": true
-                        },
+                        "ip": {"type": "string"},
                         "host_vars": {
                             "type": "object",
                             "properties": {
@@ -121,13 +105,9 @@
                                         "properties": {
                                             "type": {
                                                 "type": "string",
-                                                "enum": ["raw", "vlan_tagged", "bonded", "bridged"],
-                                                "required": true
+                                                "enum": ["raw", "vlan_tagged", "bonded", "bridged"]
                                             },
-                                            "device_name": {
-                                                "type": "string",
-                                                "required": true
-                                            },
+                                            "device_name": {"type": "string"},
                                             "bond_master": {"type": "string"},
                                             "bond_primary": {"type": "boolean"},
                                             "tagged_device_name": {"type": "string"},
@@ -135,34 +115,186 @@
                                                 "type": "array",
                                                 "items": {
                                                     "type": "string",
-                                                    "pattern": "^bond[0-9]+(\.[0-9]+)?"
+                                                    "pattern": "^bond[0-9]+(\\.[0-9]+)?$"
                                                 }
                                             },
-                                            "address": {
-                                                "type": "string",
-                                                "format": "hostname"
-                                            },
-                                            "netmask": {
-                                                "type": "string",
-                                                "format": "hostname"
-                                            },
-                                            "gateway": {
-                                                "type": "string",
-                                                "format": "hostname"
-                                            },
+                                            "address": {"type": "string"},
+                                            "netmask": {"type": "string"},
+                                            "gateway": {"type": "string"},
                                             "dns_nameservers": {
+                                                "type": "array",
+                                                "items": {"type": "string"}
+                                            }
+                                        },
+                                        "required": ["type", "device_name"]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "required": ["ip", "host_vars"]
+                }
+            }
+        },
+        "storage_hosts": {
+            "type": "object",
+            "patternProperties": {
+                "^cinder[1-9][0-9]+$": {
+                    "type": "object",
+                    "properties": {
+                        "ip": {"type": "string"},
+                        "container_vars": {
+                            "type": "object",
+                            "properties": {
+                                "cinder_storage_availability_zone": {
+                                    "type": "string",
+                                    "pattern": "^cinderAZ_[1-9][0-9]+$"
+                                },
+                                "cinder_default_availability_zone": {
+                                    "type": "string",
+                                    "pattern": "^cinderAZ_[1-9][0-9]+$"
+                                },
+                                "cinder_backends": {
+                                    "type": "object",
+                                    "properties": {
+                                        "limit_container_types": {
+                                            "type": "string",
+                                            "required": true
+                                        },
+                                        "netapp": {
+                                            "type": "object",
+                                            "properties": {
+                                                "netapp_storage_family": {"type": "string"},
+                                                "netapp_storage_protocol": {"type": "string"},
+                                                "netapp_server_hostname": {"type": "string"},
+                                                "netapp_server_port": {"type": "integer"},
+                                                "netapp_login": {"type": "string"},
+                                                "netapp_password": {"type": "string"},
+                                                "volume_driver": {
+                                                    "type": "string",
+                                                    "enum": ["cinder.volume.drivers.netapp.common.NetAppDriver"]
+                                                },
+                                                "volume_backend_name": {"type": "string"}
+                                            }
+                                        }
+                                    },
+                                    "patternProperties": {
+                                        "^lvm(_ssd)?$": {
+                                            "type": "object",
+                                            "properties": {
+                                                "volume_group": {"type": "string"},
+                                                "volume_driver": {
+                                                    "type": "string",
+                                                    "enum": ["cinder.volume.drivers.lvm.LVMISCSIDriver"]
+                                                },
+                                                "volume_backend_name": {
+                                                    "type": "string",
+                                                    "pattern": "^LVM_iSCSI(_SSD)?$"
+                                                }
+                                            },
+                                            "required": [
+                                                "volume_group",
+                                                "volume_driver",
+                                                "volume_backend_name"
+                                            ]
+                                        }
+                                    }
+                                },
+                                "nfs_client": {
+                                    "type": "object",
+                                    "properties": {
+                                        "nfs_shares_config": {"type": "string"},
+                                        "shares": {
+                                            "type": "object",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "ip": {"type": "string"},
+                                                    "share": {"type": "string"}
+                                                },
+                                                "required": ["ip", "share"]
+                                            }
+                                        }
+                                    },
+                                    "required": ["nfs_shares_config", "shares"]
+                                }
+                            },
+                            "required": [
+                                "cinder_storage_availability_zone",
+                                "cinder_default_availability_zone",
+                                "cinder_backends"
+                            ]
+                        }
+                    },
+                    "required": ["ip", "container_vars"]
+                }
+            }
+        },
+        "log_hosts": {
+            "type": "object",
+            "patternProperties": {
+                "^logger[1-9][0-9]+$": {
+                    "type": "object",
+                    "properties": {
+                        "ip": {"type": "string"}
+                    },
+                    "required": ["ip"]
+                }
+            }
+        },
+        "network_hosts": {
+            "type": "object",
+            "patternProperties": {
+                "^network[1-9][0-9]+$": {
+                    "type": "object",
+                    "properties": {
+                        "ip": {"type": "string"},
+                        "host_vars": {
+                            "type": "object",
+                            "properties": {
+                                "host_networks": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string",
+                                                "enum": ["raw", "vlan_tagged", "bonded", "bridged"]
+                                            },
+                                            "device_name": {"type": "string"},
+                                            "bond_master": {"type": "string"},
+                                            "bond_primary": {"type": "boolean"},
+                                            "tagged_device_name": {"type": "string"},
+                                            "bridge_ports": {
                                                 "type": "array",
                                                 "items": {
                                                     "type": "string",
-                                                    "format": "hostname"
+                                                    "pattern": "^bond[0-9](\\.[0-9]+)?$"
                                                 }
+                                            },
+                                            "address": {"type": "string"},
+                                            "netmask": {"type": "string"},
+                                            "gateway": {"type": "string"},
+                                            "dns_nameservers": {
+                                                "type": "array",
+                                                "items": {"type": "string"}
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
+                    },
+                    "required": ["ip", "host_vars"]
+                }
+            }
+        },
+        "haproxy_hosts": {
+            "type": "object",
+            "patternProperties": {
+                "^haproxy[1-9][0-9]+$": {
+                    "type": "object",
+                    "properties": {"type": "string"}
                 }
             }
         }
@@ -170,6 +302,9 @@
     "required": [
         "cidr_networks",
         "infra_hosts",
-        "compute_hosts"
+        "compute_hosts",
+        "storage_hosts",
+        "log_hosts",
+        "network_hosts"
     ]
 }

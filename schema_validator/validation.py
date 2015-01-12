@@ -13,16 +13,31 @@
 # under the License.
 """Module containing all of the validation logic for schema-validator."""
 import json
+import re
 
 import jsonschema
-import yaml
+import netaddr
 import rfc3986
+import yaml
 
 
 @jsonschema.FormatChecker.cls_checks('uri')
 def _validate_uri(instance):
     return rfc3986.is_valid_uri(instance, require_scheme=True,
                                 require_authority=True)
+
+
+@jsonschema.FormatChecker.cls_checks('cidr')
+def _validate_cidr_format(cidr):
+    try:
+        netaddr.IPNetwork(cidr)
+    except netaddr.AddrFormatError:
+        return False
+    if '/' not in cidr:
+        return False
+    if re.search('\s', cidr):
+        return False
+    return True
 
 
 def validate(**kwargs):
@@ -36,8 +51,10 @@ def validate(**kwargs):
     with open(schema_file) as fd:
         parsed_schema = json.load(fd)
 
+    validator = jsonschema.validators.Draft4Validator(parsed_schema)
+
     try:
-        jsonschema.validate(parsed_yaml, parsed_schema)
+        validator.validate(parsed_yaml)
     except jsonschema.exceptions.SchemaError as error:
         return str(error)
 

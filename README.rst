@@ -24,6 +24,7 @@ Usage
     $ python -m schema_validator examples/os-ansible-deployment/user_variables{_schema.json,.yml}
     $ echo $?
     0
+    $ schema-validator examples/os-ansible-deployment/rpc_user_config{_schema.json,.yml}
 
 Development
 -----------
