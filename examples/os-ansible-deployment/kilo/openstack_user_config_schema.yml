@@ -1,0 +1,348 @@
+---
+type: object
+copyright: >
+  Copyright 2014, Rackspace US, Inc.
+ 
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+      http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+documentation: >
+  Overview
+  ========
+ 
+  This file contains the configuration for OpenStack Ansible Deployment
+  (OSAD) core services. Optional service configuration resides in the
+  conf.d directory.
+ 
+  You can customize the options in this file and copy it to
+  /etc/openstack_deploy/openstack_user_config.yml or create a new
+  file containing only necessary options for your environment
+  before deployment.
+ 
+  OSAD implements PyYAML to parse YAML files and therefore supports structure
+  and formatting options that augment traditional YAML. For example, aliases
+  or references. For more information on PyYAML, see the documentation at
+ 
+  http://pyyaml.org/wiki/PyYAMLDocumentation
+properties:
+  cidr_networks:
+    required: true
+    documentation: >
+      Contains an arbitrary list of networks for the deployment. For each network,
+      the inventory generator uses the IP address range to create a pool of IP
+      addresses for network interfaces inside containers. A deployment requires
+      at least one network for management.
+     
+        Option: <value> (required, string)
+        Name of network and IP address range in CIDR notation. This IP address
+        range coincides with the IP address range of the bridge for this network
+        on the target host.
+     
+      Example:
+     
+      Define networks for a typical deployment.
+     
+        - Management network on 172.29.236.0/22. Control plane for infrastructure
+          services, OpenStack APIs, and horizon.
+        - Tunnel network on 172.29.240.0/22. Data plane for project (tenant) VXLAN
+          networks.
+        - Storage network on 172.29.244.0/22. Data plane for storage services such
+          as cinder and swift.
+     
+      cidr_networks:
+        management: 172.29.236.0/22
+        tunnel: 172.29.240.0/22
+        storage: 172.29.244.0/22
+     
+      Example:
+     
+      Define additional service network on 172.29.248.0/22 for deployment in a
+      Rackspace data center.
+     
+        snet: 172.29.248.0/22
+    type: object
+    # TODO(sigmavirus24): Write a format checker for cidr_networks
+    # format: cidr_networks
+  used_ips:
+    required: false
+    documentation: >
+      For each network in the 'cidr_networks' level, specify a list of IP 
+      addresses
+      or a range of IP addresses that the inventory generator should exclude from
+      the pools of IP addresses for network interfaces inside containers. To use a
+      range, specify the lower and upper IP addresses (inclusive) with a comma
+      separator.
+     
+      Example:
+     
+      The management network includes a router (gateway) on 172.29.236.1 and
+      DNS servers on 172.29.236.11-12. The deployment includes seven target
+      servers on 172.29.236.101-103, 172.29.236.111, 172.29.236.121, and
+      172.29.236.131. However, the inventory generator automatically excludes
+      these IP addresses. Network policy at this particular example organization
+      also reserves 231-254 in the last octet at the high end of the range for
+      network device management.
+     
+      used_ips:
+        - 172.29.236.1
+        - 172.29.236.11,172.29.236.12
+        - 172.29.239.231,172.29.239.254
+    type: array
+    # TODO(sigmavirus24): Write a format checker for this
+    # format: used_ips
+  global_overrides:
+    required: true
+    documentation: >
+      Contains global options that require customization for a deployment. For
+      example, load balancer virtual IP addresses (VIP). This level also provides
+      a mechanism to override other options defined in the playbook structure.
+    type: object
+    properties:
+      internal_lb_vip_address:
+        required: true
+        type: string
+        documentation: >
+          Load balancer VIP for the following items:
+       
+          - Local package repository
+          - Galera SQL database cluster
+          - Administrative and internal API endpoints for all OpenStack services
+          - Glance registry
+          - Nova compute source of images
+          - Cinder source of images
+          - Instance metadata
+      external_lb_vip_address:
+        required: true
+        type: string
+        documentation: >
+          Load balancer VIP for the following items:
+       
+          - Public API endpoints for all OpenStack services
+          - Horizon
+      management_bridge:
+        required: true
+        type: string
+        documentation: >
+          Name of management network bridge on target hosts. Typically 'br-mgmt'
+      tunnel_bridge:
+        required: false
+        type: string
+        documentation: >
+          Name of tunnel network bridge on target hosts. Typically 'br-vxlan'.
+      provider_networks:
+        required: true
+        type: array
+        documentation: >
+          List of container and bare metal networks on target hosts.
+        items:
+          type: object
+          properties:
+            network:
+              required: true
+              type: object
+              documentation: >
+                Defines a container or bare metal network. Create a level for each
+                network.
+              properties:
+                type:
+                  required: true
+                  type: string
+                  documentation: >
+                    Type of network. Networks other than those for neutron such as
+                    management and storage typically use 'raw'. Neutron networks use
+                    'flat', 'vlan', or 'vxlan'. Coincides with ML2 plug-in configuration
+                    options.
+                container_bridge:
+                  required: true
+                  type: string
+                  documentation: >
+                    Name of unique bridge on target hosts to use for this network. Typical
+                    values include 'br-mgmt', 'br-storage', 'br-vlan', 'br-vxlan', etc.
+                container_interface:
+                  required: true
+                  type: string
+                  documentation: >
+                    Name of unique interface in containers to use for this network.
+                    Typical values include 'eth1', 'eth2', etc.
+                container_type:
+                  required: true
+                  type: string
+                  documentation: >
+                    Name of mechanism that connects interfaces in containers to the bridge
+                    on target hosts for this network. Typically 'veth'.
+                container_mtu:
+                  required: false
+                  type: string
+                  documentation: >
+                    Sets the MTU within LXC for a given network type.
+                ip_from_q:
+                  required: false
+                  type: string
+                  documentation: >
+                    Name of network in 'cidr_networks' level to use for IP address pool.
+                    Only valid for 'raw' and 'vxlan' types.
+                is_container_address:
+                  required: true
+                  type: boolean
+                  documentation: >
+                    If true, the load balancer uses this IP address to access services
+                    in the container. Only valid for networks with 'ip_from_q' option.
+                is_ssh_address:
+                  required: true
+                  type: boolean
+                  documentation: >
+                    If true, Ansible uses this IP address to access the container via SSH.
+                    Only valid for networks with 'ip_from_q' option.
+                group_binds:
+                  required: true
+                  type: array
+                  documentation: >
+                    List of one or more Ansible groups that contain this
+                    network. For more information, see the openstack_environment.yml file.
+                  items:
+                    type: array
+                net_name:
+                  required: false
+                  type: string
+                  documentation: >
+                    Name of network for 'flat' or 'vlan' types. Only valid for these
+                    types. Coincides with ML2 plug-in configuration options.
+                range:
+                  required: false
+                  type: string
+                  documentation: >
+                    For 'vxlan' type neutron networks, range of VXLAN network identifiers
+                    (VNI). For 'vlan' type neutron networks, range of VLAN tags. Coincides
+                    with ML2 plug-in configuration options.
+    examples:
+      - scenario: >
+          Define a typical network architecture:
+       
+          - Network of type 'raw' that uses the 'br-mgmt' bridge and 'management'
+            IP address pool. Maps to the 'eth1' device in containers. Applies to all
+            containers and bare metal hosts. Both the load balancer and Ansible
+            use this network to access containers and services.
+          - Network of type 'raw' that uses the 'br-storage' bridge and 'storage'
+            IP address pool. Maps to the 'eth2' device in containers. Applies to
+            nova compute and all storage service containers. Optionally applies to
+            to the swift proxy service.
+          - Network of type 'vxlan' that contains neutron VXLAN tenant networks
+            1 to 1000 and uses 'br-vxlan' bridge on target hosts. Maps to the
+            'eth10' device in containers. Applies to all neutron agent containers
+            and neutron agents on bare metal hosts.
+          - Network of type 'vlan' that contains neutron VLAN networks 101 to 200
+            and uses the 'br-vlan' bridge on target hosts. Maps to the 'eth11' device
+            in containers. Applies to all neutron agent containers and neutron agents
+            on bare metal hosts.
+          - Network of type 'flat' that contains one neutron flat network and uses
+            the 'br-vlan' bridge on target hosts. Maps to the 'eth12' device in
+            containers. Applies to all neutron agent containers and neutron agents
+            on bare metal hosts.
+       
+          Note: A pair of 'vlan' and 'flat' networks can use the same bridge because
+          one only handles tagged frames and the other only handles untagged frames
+          (the native VLAN in some parlance). However, additional 'vlan' or 'flat'
+          networks require additional bridges.
+        example: >
+          provider_networks:
+            - network:
+                group_binds:
+                  - all_containers
+                  - hosts
+                type: "raw"
+                container_bridge: "br-mgmt"
+                container_interface: "eth1"
+                container_type: "veth"
+                ip_from_q: "management"
+                is_container_address: true
+                is_ssh_address: true
+            - network:
+                group_binds:
+                  - glance_api
+                  - cinder_api
+                  - cinder_volume
+                  - nova_compute
+                  # Uncomment the next line if using swift with a storage network.
+                  # - swift_proxy
+                type: "raw"
+                container_bridge: "br-storage"
+                container_type: "veth"
+                container_interface: "eth2"
+                container_mtu: "9000"
+                ip_from_q: "storage"
+            - network:
+                group_binds:
+                  - neutron_linuxbridge_agent
+                container_bridge: "br-vxlan"
+                container_type: "veth"
+                container_interface: "eth10"
+                container_mtu: "9000"
+                ip_from_q: "tunnel"
+                type: "vxlan"
+                range: "1:1000"
+                net_name: "vxlan"
+            - network:
+                group_binds:
+                  - neutron_linuxbridge_agent
+                container_bridge: "br-vlan"
+                container_type: "veth"
+                container_interface: "eth11"
+                type: "vlan"
+                range: "101:200"
+                net_name: "vlan"
+            - network:
+                group_binds:
+                  - neutron_linuxbridge_agent
+                container_bridge: "br-vlan"
+                container_type: "veth"
+                container_interface: "eth12"
+                host_bind_override: "eth12"
+                type: "flat"
+                net_name: "flat"
+      - scenario: >
+          Add the service network to the previous example:
+       
+          - Network of type 'raw' that uses the 'br-snet' bridge and 'snet' IP
+            address pool. Maps to the 'eth3' device in containers. Applies to
+            glance, nova compute, neutron agent containers, and any of these
+            services on bare metal hosts.
+        example: >
+          provider_networks:
+            - network:
+                group_binds:
+                  - glance_api
+                  - nova_compute
+                  - neutron_linuxbridge_agent
+                type: "raw"
+                container_bridge: "br-snet"
+                container_type: "veth"
+                container_interface: "eth3"
+                ip_from_q: "snet"
+  shared-infra_hosts:
+    required: true
+    type: object
+    documentation: >
+      List of target hosts on which to deploy shared infrastructure services
+      including the Galera SQL database cluster, RabbitMQ, and Memcached. Recommend
+      three minimum target hosts for these services.
+    # TODO(sigmavirus24): Add a format checker for this
+    # format: shared_infra_hosts_format
+    examples:
+      - scenario: >
+          Define three shared infrastructure hosts:
+        example: >
+          shared-infra_hosts:
+            infra1:
+              ip: 172.29.236.101
+            infra2:
+              ip: 172.29.236.102
+            infra3:
+              ip: 172.29.236.103
