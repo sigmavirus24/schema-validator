@@ -32,6 +32,73 @@ documentation: >
   or references. For more information on PyYAML, see the documentation at
  
   http://pyyaml.org/wiki/PyYAMLDocumentation
+
+common_definitions:
+  infra_hosts:
+    patternProperties:
+      "[a-zA-Z0-9]+":
+        type: object
+        properties:
+          ip:
+            required: true
+
+  volume_backend:
+    type: object
+    properties:
+      volume_backend_name:
+        required: true
+        type: string
+        documentation: >
+          Name of backend, arbitrary.
+      volume_driver:
+        required: true
+        type: string
+        documentation: >
+          Name of volume driver, typically
+          'cinder.volume.drivers.lvm.LVMVolumeDriver'.
+
+  storage_host:
+    required: false
+    type: object
+    documentation: >
+      Shared definition for a storage host described in 'storage_hosts'.
+    properties:
+      ip:
+        required: true
+        type: string
+        documentation: >
+          IP address of this target host, typically the IP address assigned to
+          the management bridge.
+      container_vars:
+        required: true
+        type: object
+        documentation: >
+          Contains storage options for this target host.
+        properties:
+          cinder_storage_availability_zone:
+            required: false
+            type: string
+            documentation: >
+              Cinder availability zone.
+          cinder_default_availability_zone:
+            required: false
+            type: string
+            documentation: >
+              If the deployment contains more than one cinder availability zone,
+              specify a default availability zone.
+          cinder_backends:
+            required: true
+            type: object
+            documentation: >
+              Contains cinder backends.
+            properties:
+              limit_container_types:
+                required: false
+                type: string
+                documentation: >
+                  Container name string in which to apply these options. Typically
+                  any container with 'cinder_volume' in the name.
+
 properties:
   cidr_networks:
     required: true
@@ -71,6 +138,7 @@ properties:
     type: object
     # TODO(sigmavirus24): Write a format checker for cidr_networks
     # format: cidr_networks
+
   used_ips:
     required: false
     documentation: >
@@ -98,6 +166,7 @@ properties:
     type: array
     # TODO(sigmavirus24): Write a format checker for this
     # format: used_ips
+
   global_overrides:
     required: true
     documentation: >
@@ -326,6 +395,7 @@ properties:
                 container_type: "veth"
                 container_interface: "eth3"
                 ip_from_q: "snet"
+
   shared-infra_hosts:
     required: true
     type: object
@@ -333,13 +403,161 @@ properties:
       List of target hosts on which to deploy shared infrastructure services
       including the Galera SQL database cluster, RabbitMQ, and Memcached. Recommend
       three minimum target hosts for these services.
-    # TODO(sigmavirus24): Add a format checker for this
-    # format: shared_infra_hosts_format
+    properties:
+      $ref: '#/common_definitions/infra_hosts'
     examples:
       - scenario: >
           Define three shared infrastructure hosts:
         example: >
           shared-infra_hosts:
+            infra1:
+              ip: 172.29.236.101
+            infra2:
+              ip: 172.29.236.102
+            infra3:
+              ip: 172.29.236.103
+
+  repo-infra_hosts:
+    required: true
+    type: object
+    documentation: >
+      List of target hosts on which to deploy the package repository. Recommend
+      minimum three target hosts for this service. Typically contains the same
+      target hosts as the 'shared-infra_hosts' level.
+    properties:
+      $ref: '#/common_definitions/infra_hosts'
+    examples:
+      - scenario: >
+          Define three package repository hosts:
+        example: >
+          repo-infra_hosts:
+            infra1:
+              ip: 172.29.236.101
+            infra2:
+              ip: 172.29.236.102
+            infra3:
+              ip: 172.29.236.103
+
+  os-infra_hosts:
+    required: true
+    type: object
+    documentation: >
+      List of target hosts on which to deploy the glance API, nova API, heat API,
+      and horizon. Recommend three minimum target hosts for these services.
+      Typically contains the same target hosts as 'shared-infra_hosts' level.
+    properties:
+      $ref: '#/common_definitions/infra_hosts'
+    examples:
+      - scenario: >
+          Define three OpenStack infrastructure hosts:
+        example: >
+          os-infra_hosts:
+            infra1:
+              ip: 172.29.236.100
+            infra2:
+              ip: 172.29.236.101
+            infra3:
+              ip: 172.29.236.102
+
+  identity_hosts:
+    required: true
+    type: object
+    documentation: >
+      List of target hosts on which to deploy the keystone service. Recommend
+      three minimum target hosts for this service. Typically contains the same
+      target hosts as the 'shared-infra_hosts' level.
+    properties:
+      $ref: '#/common_definitions/infra_hosts'
+    examples:
+      - scenario: >
+          Define three OpenStack identity hosts:
+        example: >
+          identity_hosts:
+            infra1:
+              ip: 172.29.236.101
+            infra2:
+              ip: 172.29.236.102
+            infra3:
+              ip: 172.29.236.103
+
+  network_hosts:
+    required: true
+    type: object
+    documentation: >
+      List of target hosts on which to deploy neutron services. Recommend three
+      minimum target hosts for this service. Typically contains the same target
+      hosts as the 'shared-infra_hosts' level.
+    properties:
+      $ref: '#/common_definitions/infra_hosts'
+    examples:
+      - scenario: >
+          Define three OpenStack network hosts:
+        example: >
+          network_hosts:
+            infra1:
+              ip: 172.29.236.101
+            infra2:
+              ip: 172.29.236.102
+            infra3:
+              ip: 172.29.236.103
+
+  compute_hosts:
+    required: true
+    type: object
+    documentation: >
+      List of target hosts on which to deploy the nova compute service. Recommend
+      one minimum target host for this service. Typically contains target hosts
+      that do not reside in other levels.
+    properties:
+      $ref: '#/common_definitions/infra_hosts'
+    examples:
+      - scenario: >
+          Define three OpenStack compute hosts:
+        example: >
+          compute_hosts:
+            infra1:
+              ip: 172.29.236.101
+            infra2:
+              ip: 172.29.236.102
+            infra3:
+              ip: 172.29.236.103
+
+  storage-infra_hosts:
+    required: true
+    type: object
+    documentation: >
+      List of target hosts on which to deploy the cinder API. Recommend three
+      minimum target hosts for this service. Typically contains the same target
+      hosts as the 'shared-infra_hosts' level.
+    properties:
+      $ref: '#/common_definitions/infra_hosts'
+    examples:
+      - scenario: >
+          Define three OpenStack storage hosts:
+        example: >
+          storage-infra_hosts:
+            infra1:
+              ip: 172.29.236.101
+            infra2:
+              ip: 172.29.236.102
+            infra3:
+              ip: 172.29.236.103
+
+  storage_hosts:
+    required: true
+    type: object
+    documentation: >
+      List of target hosts on which to deploy the cinder volume service. Recommend
+      one minimum target host for this service. Typically contains target hosts
+      that do not reside in other levels.
+    # TODO(sigmavirus24): Make a storage_hosts_format that depends on
+    # storage_host definition above
+    # format: storage_hosts_format
+    examples:
+      - scenario: >
+          Define three OpenStack storage hosts:
+        example: >
+          storage-infra_hosts:
             infra1:
               ip: 172.29.236.101
             infra2:
