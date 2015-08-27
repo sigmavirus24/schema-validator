@@ -42,7 +42,7 @@ common_definitions:
           ip:
             required: true
 
-  volume_backend:
+  volume_backend_properties:
     type: object
     properties:
       volume_backend_name:
@@ -54,8 +54,64 @@ common_definitions:
         required: true
         type: string
         documentation: >
-          Name of volume driver, typically
-          'cinder.volume.drivers.lvm.LVMVolumeDriver'.
+          Name of volume driver, typically one of
+          'cinder.volume.drivers.lvm.LVMVolumeDriver',
+          'cinder.volume.drivers.nfs.NfsDriver',
+          'cinder.volume.drivers.netapp.common.NetAppDriver'.
+          NB. When using NFS driver you may want to adjust your
+          env.d/cinder.yml file to run cinder-volumes in containers.
+          NB. When using NFS driver you may want to adjust your
+          env.d/cinder.yml file to run cinder-volumes in containers.
+      volume_group:
+        required: true
+        type: string
+        documentation: >
+          Name of LVM volume group, typically 'cinder-volumes'.
+      nfs_shares_config:
+        required: false
+        type: string
+        documentation: >
+          File containing list of NFS shares available to cinder, typically
+          '/etc/cinder/nfs_shares'.
+      nfs_mount_point_base:
+        required: false
+        type: string
+        documentation: >
+          Location in which to mount NFS shares, typically
+          '$state_path/mnt'.
+      # NOTE(sigmavirus24): The following are *required* if you're using the
+      # NetAppDriver above
+      netapp_storage_family:
+        required: false
+        type: string
+        documentation: >
+          Access method, typically 'ontap_7mode' or 'ontap_cluster'.
+      netapp_storage_protocol:
+        required: false
+        type: string
+        documentation: >
+          Transport method, typically 'scsi' or 'nfs'. NFS transport also
+          requires the 'nfs_shares_config' option.
+      netapp_server_hostname:
+        required: false
+        type: string
+        documentation: >
+          NetApp server hostname.
+      netapp_server_port:
+        required: false
+        type: integer
+        documentation: >
+          NetApp server port, typically 80 or 443.
+      netapp_login:
+        required: false
+        type: string
+        documentation: >
+          NetApp server username.
+      netapp_password:
+        required: false
+        type: string
+        documentation: >
+          NetApp server password.
 
   storage_host:
     required: false
@@ -98,6 +154,46 @@ common_definitions:
                 documentation: >
                   Container name string in which to apply these options. Typically
                   any container with 'cinder_volume' in the name.
+              cinder_nfs_client:
+                required: false
+                type: object
+                documentation: >
+                  Automates management of the file that cinder references for a list of
+                  NFS mounts.
+                properties:
+                  nfs_shares_config:
+                    required: true
+                    type: string
+                    documentation: >
+                      File containing list of NFS shares available to cinder, typically
+                      typically /etc/cinder/nfs_shares.
+                  shares:
+                    required: true
+                    type: array
+                    documentation: >
+                      List of shares to populate the 'nfs_shares_config' file. Each share
+                      uses the following format:
+                    minItems: 1
+                    items:
+                      type: object
+                      properties:
+                        ip:
+                          required: true
+                          type: ipv4
+                        share:
+                          required: true
+                          type: string
+            patternProperties:
+              "[a-zA-Z0-9]+":
+                required: true
+                type: object
+                documentation: >
+                  Arbitrary name of the backend. Each backend contains one or more
+                  options for the particular backend driver. The template for the
+                  cinder.conf file can generate configuration for any backend
+                  providing that it includes the necessary driver options.
+                properties:
+                  $ref: volume_backend_properties
 
 properties:
   cidr_networks:
@@ -555,12 +651,8 @@ properties:
     # format: storage_hosts_format
     examples:
       - scenario: >
-          Define three OpenStack storage hosts:
+          Define an OpenStack storage host:
         example: >
-          storage-infra_hosts:
-            infra1:
-              ip: 172.29.236.101
-            infra2:
-              ip: 172.29.236.102
-            infra3:
-              ip: 172.29.236.103
+          storage_hosts:
+            storage1:
+              ip: 172.29.236.121
