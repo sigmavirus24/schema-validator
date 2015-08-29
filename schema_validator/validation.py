@@ -12,7 +12,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 """Module containing all of the validation logic for schema-validator."""
-import json
 import re
 
 import jsonschema
@@ -49,7 +48,7 @@ def validate(**kwargs):
         parsed_yaml = yaml.load(fd)
 
     with open(schema_file) as fd:
-        parsed_schema = json.load(fd)
+        parsed_schema = yaml.load(fd)
 
     validator = jsonschema.validators.Draft4Validator(parsed_schema)
 
