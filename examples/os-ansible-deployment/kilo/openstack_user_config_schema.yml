@@ -38,20 +38,27 @@ common_definitions:
     patternProperties:
       "[a-zA-Z0-9]+":
         type: object
+        required:
+          - ip
         properties:
           ip:
-            required: true
+            type: string
+            anyOf:
+              - format: ipv4
+              - format: ipv6
 
   volume_backend_properties:
     type: object
+    required:
+      - volume_backend_name
+      - volume_driver
+      - volume_group
     properties:
       volume_backend_name:
-        required: true
         type: string
         documentation: >
           Name of backend, arbitrary.
       volume_driver:
-        required: true
         type: string
         documentation: >
           Name of volume driver, typically one of
@@ -63,18 +70,15 @@ common_definitions:
           NB. When using NFS driver you may want to adjust your
           env.d/cinder.yml file to run cinder-volumes in containers.
       volume_group:
-        required: true
         type: string
         documentation: >
           Name of LVM volume group, typically 'cinder-volumes'.
       nfs_shares_config:
-        required: false
         type: string
         documentation: >
           File containing list of NFS shares available to cinder, typically
           '/etc/cinder/nfs_shares'.
       nfs_mount_point_base:
-        required: false
         type: string
         documentation: >
           Location in which to mount NFS shares, typically
@@ -82,93 +86,85 @@ common_definitions:
       # NOTE(sigmavirus24): The following are *required* if you're using the
       # NetAppDriver above
       netapp_storage_family:
-        required: false
         type: string
         documentation: >
           Access method, typically 'ontap_7mode' or 'ontap_cluster'.
       netapp_storage_protocol:
-        required: false
         type: string
         documentation: >
           Transport method, typically 'scsi' or 'nfs'. NFS transport also
           requires the 'nfs_shares_config' option.
       netapp_server_hostname:
-        required: false
         type: string
         documentation: >
           NetApp server hostname.
       netapp_server_port:
-        required: false
         type: integer
         documentation: >
           NetApp server port, typically 80 or 443.
       netapp_login:
-        required: false
         type: string
         documentation: >
           NetApp server username.
       netapp_password:
-        required: false
         type: string
         documentation: >
           NetApp server password.
 
   storage_host:
-    required: false
+    required:
+      - ip
+      - container_vars
     type: object
     documentation: >
       Shared definition for a storage host described in 'storage_hosts'.
     properties:
       ip:
-        required: true
         type: string
         documentation: >
           IP address of this target host, typically the IP address assigned to
           the management bridge.
       container_vars:
-        required: true
         type: object
         documentation: >
           Contains storage options for this target host.
+        required:
+          - cinder_backends
         properties:
           cinder_storage_availability_zone:
-            required: false
             type: string
             documentation: >
               Cinder availability zone.
           cinder_default_availability_zone:
-            required: false
             type: string
             documentation: >
               If the deployment contains more than one cinder availability zone,
               specify a default availability zone.
           cinder_backends:
-            required: true
             type: object
             documentation: >
               Contains cinder backends.
             properties:
               limit_container_types:
-                required: false
                 type: string
                 documentation: >
                   Container name string in which to apply these options. Typically
                   any container with 'cinder_volume' in the name.
               cinder_nfs_client:
-                required: false
                 type: object
                 documentation: >
                   Automates management of the file that cinder references for a list of
                   NFS mounts.
                 properties:
+                  - nfs_shares_config
+                  - shares
+                properties:
                   nfs_shares_config:
-                    required: true
                     type: string
                     documentation: >
                       File containing list of NFS shares available to cinder, typically
                       typically /etc/cinder/nfs_shares.
                   shares:
-                    required: true
                     type: array
                     documentation: >
                       List of shares to populate the 'nfs_shares_config' file. Each share
@@ -176,16 +172,19 @@ common_definitions:
                     minItems: 1
                     items:
                       type: object
+                      required:
+                        - ip
+                        - share
                       properties:
                         ip:
-                          required: true
-                          type: ipv4
+                          type: string
+                          anyOf:
+                            - format: ipv4
+                            - format: ipv6
                         share:
-                          required: true
                           type: string
             patternProperties:
               "[a-zA-Z0-9]+":
-                required: true
                 type: object
                 documentation: >
                   Arbitrary name of the backend. Each backend contains one or more
@@ -195,9 +194,21 @@ common_definitions:
                 properties:
                   $ref: volume_backend_properties
 
+required:
+  - cidr_networks
+  - global_overrides
+  - shared-infra_hosts
+  - repo-infra_hosts
+  - os-infra_hosts
+  - identity_hosts
+  - network_hosts
+  - compute_hosts
+  - storage-infra_hosts
+  - storage_hosts
+  - log_hosts
+
 properties:
   cidr_networks:
-    required: true
     documentation: >
       Contains an arbitrary list of networks for the deployment. For each network,
       the inventory generator uses the IP address range to create a pool of IP
@@ -232,11 +243,12 @@ properties:
      
         snet: 172.29.248.0/22
     type: object
-    # TODO(sigmavirus24): Write a format checker for cidr_networks
-    # format: cidr_networks
+    patternProperties:
+      '[a-zA-Z]+':
+        type: string
+        format: cidr
 
   used_ips:
-    required: false
     documentation: >
       For each network in the 'cidr_networks' level, specify a list of IP 
       addresses
@@ -261,18 +273,22 @@ properties:
         - 172.29.239.231,172.29.239.254
     type: array
     # TODO(sigmavirus24): Write a format checker for this
-    # format: used_ips
+    # items:
+    #   format: used_ips
 
   global_overrides:
-    required: true
     documentation: >
       Contains global options that require customization for a deployment. For
       example, load balancer virtual IP addresses (VIP). This level also provides
       a mechanism to override other options defined in the playbook structure.
     type: object
+    required:
+      - internal_lb_vip_address
+      - external_lb_vip_address
+      - management_bridge
+      - provider_networks
     properties:
       internal_lb_vip_address:
-        required: true
         type: string
         documentation: >
           Load balancer VIP for the following items:
@@ -285,7 +301,6 @@ properties:
           - Cinder source of images
           - Instance metadata
       external_lb_vip_address:
-        required: true
         type: string
         documentation: >
           Load balancer VIP for the following items:
@@ -293,32 +308,37 @@ properties:
           - Public API endpoints for all OpenStack services
           - Horizon
       management_bridge:
-        required: true
         type: string
         documentation: >
           Name of management network bridge on target hosts. Typically 'br-mgmt'
       tunnel_bridge:
-        required: false
         type: string
         documentation: >
           Name of tunnel network bridge on target hosts. Typically 'br-vxlan'.
       provider_networks:
-        required: true
         type: array
         documentation: >
           List of container and bare metal networks on target hosts.
         items:
           type: object
+          required:
+            - network
           properties:
             network:
-              required: true
               type: object
               documentation: >
                 Defines a container or bare metal network. Create a level for each
                 network.
+              required:
+                - type
+                - container_bridge
+                - container_interface
+                - container_type
+                - is_container_address
+                - is_ssh_address
+                - group_binds
               properties:
                 type:
-                  required: true
                   type: string
                   documentation: >
                     Type of network. Networks other than those for neutron such as
@@ -326,48 +346,40 @@ properties:
                     'flat', 'vlan', or 'vxlan'. Coincides with ML2 plug-in configuration
                     options.
                 container_bridge:
-                  required: true
                   type: string
                   documentation: >
                     Name of unique bridge on target hosts to use for this network. Typical
                     values include 'br-mgmt', 'br-storage', 'br-vlan', 'br-vxlan', etc.
                 container_interface:
-                  required: true
                   type: string
                   documentation: >
                     Name of unique interface in containers to use for this network.
                     Typical values include 'eth1', 'eth2', etc.
                 container_type:
-                  required: true
                   type: string
                   documentation: >
                     Name of mechanism that connects interfaces in containers to the bridge
                     on target hosts for this network. Typically 'veth'.
                 container_mtu:
-                  required: false
                   type: string
                   documentation: >
                     Sets the MTU within LXC for a given network type.
                 ip_from_q:
-                  required: false
                   type: string
                   documentation: >
                     Name of network in 'cidr_networks' level to use for IP address pool.
                     Only valid for 'raw' and 'vxlan' types.
                 is_container_address:
-                  required: true
                   type: boolean
                   documentation: >
                     If true, the load balancer uses this IP address to access services
                     in the container. Only valid for networks with 'ip_from_q' option.
                 is_ssh_address:
-                  required: true
                   type: boolean
                   documentation: >
                     If true, Ansible uses this IP address to access the container via SSH.
                     Only valid for networks with 'ip_from_q' option.
                 group_binds:
-                  required: true
                   type: array
                   documentation: >
                     List of one or more Ansible groups that contain this
@@ -375,13 +387,11 @@ properties:
                   items:
                     type: array
                 net_name:
-                  required: false
                   type: string
                   documentation: >
                     Name of network for 'flat' or 'vlan' types. Only valid for these
                     types. Coincides with ML2 plug-in configuration options.
                 range:
-                  required: false
                   type: string
                   documentation: >
                     For 'vxlan' type neutron networks, range of VXLAN network identifiers
@@ -416,7 +426,7 @@ properties:
           one only handles tagged frames and the other only handles untagged frames
           (the native VLAN in some parlance). However, additional 'vlan' or 'flat'
           networks require additional bridges.
-        example: >
+        example: |
           provider_networks:
             - network:
                 group_binds:
@@ -479,7 +489,7 @@ properties:
             address pool. Maps to the 'eth3' device in containers. Applies to
             glance, nova compute, neutron agent containers, and any of these
             services on bare metal hosts.
-        example: >
+        example: |
           provider_networks:
             - network:
                 group_binds:
@@ -493,18 +503,16 @@ properties:
                 ip_from_q: "snet"
 
   shared-infra_hosts:
-    required: true
     type: object
     documentation: >
       List of target hosts on which to deploy shared infrastructure services
       including the Galera SQL database cluster, RabbitMQ, and Memcached. Recommend
       three minimum target hosts for these services.
-    properties:
-      $ref: '#/common_definitions/infra_hosts'
+    $ref: '#/common_definitions/infra_hosts'
     examples:
       - scenario: >
           Define three shared infrastructure hosts:
-        example: >
+        example: |
           shared-infra_hosts:
             infra1:
               ip: 172.29.236.101
@@ -514,18 +522,16 @@ properties:
               ip: 172.29.236.103
 
   repo-infra_hosts:
-    required: true
     type: object
     documentation: >
       List of target hosts on which to deploy the package repository. Recommend
       minimum three target hosts for this service. Typically contains the same
       target hosts as the 'shared-infra_hosts' level.
-    properties:
-      $ref: '#/common_definitions/infra_hosts'
+    $ref: '#/common_definitions/infra_hosts'
     examples:
       - scenario: >
           Define three package repository hosts:
-        example: >
+        example: |
           repo-infra_hosts:
             infra1:
               ip: 172.29.236.101
@@ -535,18 +541,16 @@ properties:
               ip: 172.29.236.103
 
   os-infra_hosts:
-    required: true
     type: object
     documentation: >
       List of target hosts on which to deploy the glance API, nova API, heat API,
       and horizon. Recommend three minimum target hosts for these services.
       Typically contains the same target hosts as 'shared-infra_hosts' level.
-    properties:
-      $ref: '#/common_definitions/infra_hosts'
+    $ref: '#/common_definitions/infra_hosts'
     examples:
       - scenario: >
           Define three OpenStack infrastructure hosts:
-        example: >
+        example: |
           os-infra_hosts:
             infra1:
               ip: 172.29.236.100
@@ -556,18 +560,16 @@ properties:
               ip: 172.29.236.102
 
   identity_hosts:
-    required: true
     type: object
     documentation: >
       List of target hosts on which to deploy the keystone service. Recommend
       three minimum target hosts for this service. Typically contains the same
       target hosts as the 'shared-infra_hosts' level.
-    properties:
-      $ref: '#/common_definitions/infra_hosts'
+    $ref: '#/common_definitions/infra_hosts'
     examples:
       - scenario: >
           Define three OpenStack identity hosts:
-        example: >
+        example: |
           identity_hosts:
             infra1:
               ip: 172.29.236.101
@@ -577,18 +579,16 @@ properties:
               ip: 172.29.236.103
 
   network_hosts:
-    required: true
     type: object
     documentation: >
       List of target hosts on which to deploy neutron services. Recommend three
       minimum target hosts for this service. Typically contains the same target
       hosts as the 'shared-infra_hosts' level.
-    properties:
-      $ref: '#/common_definitions/infra_hosts'
+    $ref: '#/common_definitions/infra_hosts'
     examples:
       - scenario: >
           Define three OpenStack network hosts:
-        example: >
+        example: |
           network_hosts:
             infra1:
               ip: 172.29.236.101
@@ -598,18 +598,16 @@ properties:
               ip: 172.29.236.103
 
   compute_hosts:
-    required: true
     type: object
     documentation: >
       List of target hosts on which to deploy the nova compute service. Recommend
       one minimum target host for this service. Typically contains target hosts
       that do not reside in other levels.
-    properties:
-      $ref: '#/common_definitions/infra_hosts'
+    $ref: '#/common_definitions/infra_hosts'
     examples:
       - scenario: >
           Define three OpenStack compute hosts:
-        example: >
+        example: |
           compute_hosts:
             infra1:
               ip: 172.29.236.101
@@ -619,18 +617,16 @@ properties:
               ip: 172.29.236.103
 
   storage-infra_hosts:
-    required: true
     type: object
     documentation: >
       List of target hosts on which to deploy the cinder API. Recommend three
       minimum target hosts for this service. Typically contains the same target
       hosts as the 'shared-infra_hosts' level.
-    properties:
-      $ref: '#/common_definitions/infra_hosts'
+    $ref: '#/common_definitions/infra_hosts'
     examples:
       - scenario: >
           Define three OpenStack storage hosts:
-        example: >
+        example: |
           storage-infra_hosts:
             infra1:
               ip: 172.29.236.101
@@ -640,19 +636,65 @@ properties:
               ip: 172.29.236.103
 
   storage_hosts:
-    required: true
     type: object
     documentation: >
       List of target hosts on which to deploy the cinder volume service. Recommend
       one minimum target host for this service. Typically contains target hosts
       that do not reside in other levels.
-    # TODO(sigmavirus24): Make a storage_hosts_format that depends on
-    # storage_host definition above
-    # format: storage_hosts_format
+    # TODO(sigmavirus24): Figure out how to make a patternProperty requried
+    patternProperties:
+      '[a-zA-Z0-9]+':
+        type: object
+        documentation: >
+          Hostname of a target host.
+        $ref: '#/common_definitions/storage_host'
     examples:
       - scenario: >
           Define an OpenStack storage host:
-        example: >
+        example: |
           storage_hosts:
             storage1:
               ip: 172.29.236.121
+      - scenario: >
+          Use the LVM iSCSI backend in availability zone 'cinderAZ_1':
+        example: |
+          container_vars:
+            cinder_storage_availability_zone: cinderAZ_1
+            cinder_default_availability_zone: cinderAZ_1
+            cinder_backends:
+              lvm:
+                volume_backend_name: LVM_iSCSI
+                volume_driver: cinder.volume.drivers.lvm.LVMVolumeDriver
+                volume_group: cinder-volumes
+              limit_container_types: cinder_volume
+      - scenario: >
+          Use the NetApp iSCSI backend via Data ONTAP 7-mode in availability zone
+          'cinderAZ_2':
+        example: |
+          container_vars:
+            cinder_storage_availability_zone: cinderAZ_2
+            cinder_default_availability_zone: cinderAZ_1
+            cinder_backends:
+              netapp:
+                volume_backend_name: NETAPP_iSCSI
+                volume_driver: cinder.volume.drivers.netapp.common.NetAppDriver
+                netapp_storage_family: ontap_7mode
+                netapp_storage_protocol: iscsi
+                netapp_server_hostname: hostname
+                netapp_server_port: 443
+                netapp_login: username
+                netapp_password: password
+
+  log_hosts:
+    type: object
+    documentation: >
+      List of target hosts on which to deploy logging services. Recommend
+      one minimum target host for this service.
+    $ref: '#/common_definitions/infra_hosts'
+    examples:
+      - scenario: >
+          Define a logging host:
+        example: |
+          log_hosts:
+            log1:
+              ip: 172.29.236.131
