@@ -124,6 +124,9 @@ common_definitions:
         documentation: >
           IP address of this target host, typically the IP address assigned to
           the management bridge.
+        anyOf:
+          - format: ipv4
+          - format: ipv6
       container_vars:
         type: object
         documentation: >
@@ -155,7 +158,7 @@ common_definitions:
                 documentation: >
                   Automates management of the file that cinder references for a list of
                   NFS mounts.
-                properties:
+                required:
                   - nfs_shares_config
                   - shares
                 properties:
@@ -184,7 +187,7 @@ common_definitions:
                         share:
                           type: string
             patternProperties:
-              "[a-zA-Z0-9]+":
+              "(?:limit_container_types)[a-zA-Z0-9]+":
                 type: object
                 documentation: >
                   Arbitrary name of the backend. Each backend contains one or more
@@ -334,8 +337,8 @@ properties:
                 - container_bridge
                 - container_interface
                 - container_type
-                - is_container_address
-                - is_ssh_address
+                # - is_container_address
+                # - is_ssh_address
                 - group_binds
               properties:
                 type:
@@ -385,7 +388,7 @@ properties:
                     List of one or more Ansible groups that contain this
                     network. For more information, see the openstack_environment.yml file.
                   items:
-                    type: array
+                    type: string
                 net_name:
                   type: string
                   documentation: >
