@@ -12,12 +12,20 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 """Module containing all of the validation logic for schema-validator."""
+import json
 import re
 
 import jsonschema
 import netaddr
 import rfc3986
 import yaml
+
+
+_LOADERS = {
+    'yml': yaml.safe_load,
+    'yaml': yaml.safe_load,
+    'json': json.load,
+}
 
 
 @jsonschema.FormatChecker.cls_checks('uri')
@@ -47,8 +55,10 @@ def validate(**kwargs):
     with open(yaml_file) as fd:
         parsed_yaml = yaml.load(fd)
 
+    _, extension = schema_file.rsplit('.', 1)
+    schemaload = _LOADERS.get(extension, json.load)
     with open(schema_file) as fd:
-        parsed_schema = yaml.load(fd)
+        parsed_schema = schemaload(fd)
 
     validator = jsonschema.validators.Draft4Validator(parsed_schema)
 
