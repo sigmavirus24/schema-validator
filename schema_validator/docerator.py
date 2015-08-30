@@ -11,8 +11,9 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
-"""Module so users can run ``python -m schema_validator``."""
-from . import main
+"""Module containing all of the documentation logic for schema-docerator."""
 
-if __name__ == '__main__':
-    main.validator_main()
+
+def docerate(**kwargs):
+    """Take the schema and output the documentation and examples."""
+    pass
