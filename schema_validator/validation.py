@@ -21,6 +21,13 @@ import rfc3986
 import yaml
 
 
+_LOADERS = {
+    'yml': yaml.safe_load,
+    'yaml': yaml.safe_load,
+    'json': json.load,
+}
+
+
 @jsonschema.FormatChecker.cls_checks('uri')
 def _validate_uri(instance):
     return rfc3986.is_valid_uri(instance, require_scheme=True,
@@ -48,8 +55,10 @@ def validate(**kwargs):
     with open(yaml_file) as fd:
         parsed_yaml = yaml.load(fd)
 
+    _, extension = schema_file.rsplit('.', 1)
+    schemaload = _LOADERS.get(extension, json.load)
     with open(schema_file) as fd:
-        parsed_schema = json.load(fd)
+        parsed_schema = schemaload(fd)
 
     validator = jsonschema.validators.Draft4Validator(parsed_schema)
 
